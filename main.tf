@@ -19,14 +19,34 @@ resource "null_resource" "acm_external_cert" {
 
   provisioner "local-exec" {
     interpreter = ["bash"]
-    command = templatefile(
-      "${path.module}/import-cert.sh.tpl",
-      {
-        secret_id         = data.aws_secretsmanager_secret.private_key_secret.id
-        certificate_body  = var.certificate_body
-        certificate_chain = var.certificate_cabundle_body == "" ? null : var.certificate_cabundle_body
-        tag_list          = jsonencode(module.acm_cert_tags.tag_list)
-      }
-    )
+    
+    command = <<EOF
+aws --output json acm import-certificate \
+  --private-key "$(aws --output json secretsmanager get-secret-value --secret-id ${secret_id} | jq -r '.SecretString')" \
+  --certificate "${certificate_body}" \
+  --certificate_chain "${certificate_chain}"
+EOF
+  }
+}
+
+data "aws_acm_certificate" "this" {
+  domain      = var.cert_domain
+  types       = ["IMPORTED"]
+  most_recent = true
+
+  depends_on = [
+    "null_resource.acm_external_cert"
+  ]
+}
+
+resource "null_resource" "acm_external_cert_tags" {
+  provisioner "local-exec" {
+    interpreter = ["bash"]
+    
+    command = <<EOF
+aws acm add-tags-to-certificate \
+  --certificate-arn ${data.aws_acm_certificate.this.arn} \
+  --tags "${jsonencode(module.acm_cert_tags.tag_list)}"
+EOF
   }
 }
