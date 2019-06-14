@@ -14,7 +14,7 @@ module "acm_cert_tags" {
 
 resource "null_resource" "acm_external_cert" {
   depends_on = [
-    "data.aws_secretsmanager_secret",
+    "data.aws_secretsmanager_secret.private_key_secret",
   ]
 
   provisioner "local-exec" {
