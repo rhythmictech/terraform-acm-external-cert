@@ -25,7 +25,7 @@ resource "null_resource" "acm_external_cert" {
         secret_id         = data.aws_secretsmanager_secret.private_key_secret.id
         certificate_body  = var.certificate_body
         certificate_chain = var.certificate_cabundle_body == "" ? null : var.certificate_cabundle_body
-        tag_list          = module.acm_cert_tags.tag_list
+        tag_list          = jsonencode(module.acm_cert_tags.tag_list)
       }
     )
   }
