@@ -44,4 +44,8 @@ variable "certificate_cabundle_body" {
   
 }
 
+variable "cert_domain" {
+  description = "domain name of certificate"
+  type = string
+}
 
